@@ -4,7 +4,7 @@
 #include<matplotlibcpp.h>
 
 using namespace std;
-const int N=(5e3);//最大值 
+const int N=(5e3);//最大值  
 const double step=0.01;//学习步长s
 void init(){//初始化
     srand(time(NULL));//随机数初始化
