@@ -32,12 +32,10 @@ IDF-$Inverse Document Frequency$逆文本频率指数
 
 $$
 P(A|B)=\frac{P(B|A)P(A)}{P(B)}
-
 $$
 
 $$
 P(A_i|B)=\frac{P(B|A_i)P(A_i)}{\sum_{j}P(B|A_j)P(A_j)}
-
 $$
 
 其中$A_1,A_2\cdots ,A_n$为完备事件组，即$\bigcup_{i=1}^nA_i=\Omega,A_iA_j=\varnothing,P(A_i)>0$
