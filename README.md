@@ -38,7 +38,7 @@ $$
 P(A_i|B)=\frac{P(B|A_i)P(A_i)}{\sum_{j}P(B|A_j)P(A_j)}
 $$
 
-其中 $A_1,A_2\cdots ,A_n$ 为完备事件组，即 $\bigcup_{i=1}^nA_i=\Omega,A_iA_j=\varnothing,P(A_i)>0$ 
+其中 $A_1,A_2\cdots ,A_n$ 为完备事件组，即 $\bigcup _{i=1}^nA_i=\Omega,A_iA_j=\varnothing,P(A_i)>0$ 
 
 ~之后再补充概率论吧~
 
@@ -56,7 +56,7 @@ $$
 tf_{i,j}=\frac{n_{i,j}}{N_j}
 $$
 
-其中$n_{i,j}$表示某词$i$在文档$j$中出现的次数，N表示文档$j$的词数
+其中 $n_{i,j}$ 表示某词 $i$ 在文档 $j$ 中出现的次数，N表示文档 $j$ 的词数
 
 $$
 idf_i=lg(\frac{D}{1+d_i})
