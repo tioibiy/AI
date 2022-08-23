@@ -5,7 +5,7 @@
 
 using namespace std;
 const int N=(5e3);//最大值
-const double step=0.1;//学习步长s
+const double step=1;//学习步长s
 void randInit(){//初始化
     srand(time(NULL));//随机数初始化
 }
@@ -79,6 +79,26 @@ public:
         }
     }
 }binary_crossentropy;
+class L1:public Activation{//L1范数
+public:
+    void forward(int num,double *x,double *k,double &y){
+        for(int i=1;i<=num;i++){
+            y+=abs(x[i]-k[i]);
+        }
+    }
+    void backward(int num,double *x,double *k,double &y,double &d,double *dx){
+        d=1;
+        for(int i=1;i<=num;i++){
+            if(x[i]>k[i]){
+                dx[i]=1;
+                k[i]-=-1;
+            }else{
+                dx[i]=-1;
+                k[i]-=1;
+            }
+        }
+    }
+}l1;
 class neuron{//神经元
 private:
 public:
@@ -178,8 +198,8 @@ void addEdge(int x,int y,bool forwardVis=1,bool backwardVis=1){
     Forward.add(x,y,forwardVis);
     Backward.add(y,x,backwardVis);
 }
-void init(){
-    addNode(&binary_crossentropy);
+void init(Activation *activation){
+    addNode(activation);
     for(int i=1;i<=n;i++){
         if(Forward.ind[i]==0){
             addEdge(i,n,0,1);
@@ -200,17 +220,21 @@ void train(double *x,double *y){
             net[i].d=net[i].y-y[++cnt];
         }
     }
-    cout<<net[4].y<<" "<<net[4].d<<endl;
+    cout<<net[6].y<<" "<<net[6].d<<endl;
     Backward.topo();
 }
 int main(){
     randInit();
-    addNode(4,&relu);
+    addNode(6,&sigmoid);
     addEdge(1,2);
     addEdge(1,3);
-    addEdge(2,3);
+    addEdge(2,4);
     addEdge(3,4);
-    init();
+    addEdge(2,5);
+    addEdge(3,5);
+    addEdge(4,6);
+    addEdge(5,6);
+    init(&binary_crossentropy);
     while(1){
         for(double i=0;i<=0.9;i+=0.1){
             double x[10]={},y[10]={};
