@@ -4,39 +4,81 @@
 #include<matplotlibcpp.h>
 
 using namespace std;
-const int N=(5e3);//最大值  
+const int N=(5e3);//最大值
 const double step=0.1;//学习步长s
-void init(){//初始化
+void randInit(){//初始化
     srand(time(NULL));//随机数初始化
 }
 class Activation{
 public:
-    virtual double forward(double x){
-        return x;
+    virtual void forward(int num,double *x,double *k,double &y){
+        for(int i=1;i<=num;i++){
+            y+=x[i]*k[i];
+        }
+        y+=k[num+1];
     }
-    virtual double backward(double x){
-        return 1;
+    virtual void backward(int num,double *x,double *k,double &y,double &d,double *dx){
+        k[num+1]-=step*d;
+        for(int i=1;i<=num;i++){
+            dx[i]=d*k[i];//计算x贡献
+            k[i]-=step*d*x[i];//计算k贡献并梯度下降
+        }
     }
 }a;
 class Sigmoid:public Activation{
 public:
-    double forward(double x){
-        return 1.0/(1+exp(-x));
+    void forward(int num,double *x,double *k,double &y){
+        for(int i=1;i<=num;i++){
+            y+=x[i]*k[i];
+        }
+        y+=k[num+1];
+        y=1.0/(1+exp(-y));
     }
-    double backward(double x){
-        return x*(1-x);
+    void backward(int num,double *x,double *k,double &y,double &d,double *dx){
+        d*=y*(1-y);
+        k[num+1]-=step*d;
+        for(int i=1;i<=num;i++){
+            dx[i]=d*k[i];
+            k[i]-=step*d*x[i];
+        }
     }
 }sigmoid;
 class ReLu:public Activation{
 public:
-    double forward(double x){
-        return max(0.0,x);
+    void forward(int num,double *x,double *k,double &y){
+        for(int i=1;i<=num;i++){
+            y+=x[i]*k[i];
+        }
+        y+=k[num+1];
+        y=max(0.0,y);
     }
-    double backward(double x){
-        if(x>=0) return 1;
-        return 0;
+    void backward(int num,double *x,double *k,double &y,double &d,double *dx){
+        if(y<0){
+            d=0;
+        }
+        k[num+1]-=step*d;
+        for(int i=1;i<=num;i++){
+            dx[i]=d*k[i];
+            k[i]-=step*d*x[i];
+        }
     }
 }relu;
+class Binary_Crossentropy:public Activation{//交叉熵
+public:
+    void forward(int num,double *x,double *k,double &y){
+        for(int i=1;i<=num;i++){
+            y-=x[i]*log(k[i]);
+        }
+        y/=num;
+    }
+    void backward(int num,double *x,double *k,double &y,double &d,double *dx){
+        d=1;
+        for(int i=1;i<=num;i++){
+            dx[i]=-log(k[i])/num;
+            k[i]-=-step*x[i]/(k[i]*num);
+        }
+    }
+}binary_crossentropy;
 class neuron{//神经元
 private:
 public:
@@ -57,18 +99,9 @@ public:
         if(side==0){//向前传播
             if(num==0) return;//若没有x，则说明这是一个输入节点，其y已经被提前赋值，直接返回
             y=0;
-            for(int i=1;i<=num;i++){
-                y+=x[i]*k[i];
-            }
-            y+=b;
-            y=activation->forward(y);
+            activation->forward(num,x,k,y);
         }else if(side==1){//已知y对下一个节点的贡献d时，计算x,k,b的贡献并对k,b梯度下降
-            d*=activation->backward(y);
-            b-=step*d;
-            for(int i=1;i<=num;i++){
-                dx[i]=d*k[i];//计算x贡献
-                k[i]-=step*d*x[i];//计算k贡献并梯度下降
-            }
+            activation->backward(num,x,k,y,d,dx);
             d=0;
         }
     }
@@ -138,12 +171,20 @@ public:
 };
 traverse Forward(0);
 traverse Backward(1);
-void addEdge(int x,int y,bool visible=1){
+void addEdge(int x,int y,bool forwardVis=1,bool backwardVis=1){
     net[y].addInput();
     m++;
     Index[m]=net[y].num;
-    Forward.add(x,y,visible);
-    Backward.add(y,x,visible);
+    Forward.add(x,y,forwardVis);
+    Backward.add(y,x,backwardVis);
+}
+void init(){
+    addNode(&binary_crossentropy);
+    for(int i=1;i<=n;i++){
+        if(Forward.ind[i]==0){
+            addEdge(i,n,0,1);
+        }
+    }
 }
 void train(double *x,double *y){
     int cnt=0;
@@ -159,19 +200,24 @@ void train(double *x,double *y){
             net[i].d=net[i].y-y[++cnt];
         }
     }
+    cout<<net[4].y<<" "<<net[4].d<<endl;
     Backward.topo();
 }
 int main(){
-    init();
-    addNode(4,&sigmoid);
+    randInit();
+    addNode(4,&relu);
     addEdge(1,2);
     addEdge(1,3);
     addEdge(2,3);
     addEdge(3,4);
-    double x[10]={0,0.5},y[10]={0,0.2};
+    init();
     while(1){
-        train(x,y);
-        cout<<net[4].y<<endl;
+        for(double i=0;i<=0.9;i+=0.1){
+            double x[10]={},y[10]={};
+            x[1]=i;
+            y[1]=i+0.1;
+            train(x,y);
+        }
     }
     return 0;
 }
