@@ -92,7 +92,6 @@ class traverse{
 private:
     int side=0;//向前还是向后
     int head[N]={};//链式前向星
-    int ind[N]={};//第i个节点的入度数量
     edge e[N];
     void update(int x,int y,int index){//更新节点x->y的数值
         if(side==0){
@@ -102,6 +101,7 @@ private:
         }
     }
 public:
+    int ind[N]={};//第i个节点的入度数量
     traverse(int SIDE):side(SIDE){}
     void add(int x,int y,bool visible){//建立x->y的一条边
         if(visible){
@@ -145,6 +145,22 @@ void addEdge(int x,int y,bool visible=1){
     Forward.add(x,y,visible);
     Backward.add(y,x,visible);
 }
+void train(double *x,double *y){
+    int cnt=0;
+    for(int i=1;i<=n;i++){
+        if(Forward.ind[i]==0){
+            net[i].y=x[++cnt];
+        }
+    }
+    Forward.topo();
+    cnt=0;
+    for(int i=1;i<=n;i++){
+        if(Backward.ind[i]==0){
+            net[i].d=net[i].y-y[++cnt];
+        }
+    }
+    Backward.topo();
+}
 int main(){
     init();
     addNode(4,&sigmoid);
@@ -152,15 +168,10 @@ int main(){
     addEdge(1,3);
     addEdge(2,3);
     addEdge(3,4);
+    double x[10]={0,0.5},y[10]={0,0.2};
     while(1){
-        // for(double i=0;i<=1;i+=0.01){
-            net[1].y=1;
-            Forward.topo();
-            //cout<<net[4].y<<endl;
-            net[4].d=net[4].y-0.3;
-            cout<<net[4].y<<endl;
-            Backward.topo();
-        // }
+        train(x,y);
+        cout<<net[4].y<<endl;
     }
     return 0;
 }
