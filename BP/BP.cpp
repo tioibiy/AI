@@ -5,17 +5,50 @@
 
 using namespace std;
 const int N=(5e3);//最大值  
-const double step=0.01;//学习步长s
+const double step=0.1;//学习步长s
 void init(){//初始化
     srand(time(NULL));//随机数初始化
 }
+class Activation{
+public:
+    virtual double forward(double x){
+        return x;
+    }
+    virtual double backward(double x){
+        return 1;
+    }
+}a;
+class Sigmoid:public Activation{
+public:
+    double forward(double x){
+        return 1.0/(1+exp(-x));
+    }
+    double backward(double x){
+        return x*(1-x);
+    }
+}sigmoid;
+class ReLu:public Activation{
+public:
+    double forward(double x){
+        return max(0.0,x);
+    }
+    double backward(double x){
+        if(x>=0) return 1;
+        return 0;
+    }
+}relu;
 class neuron{//神经元
+private:
 public:
     int num=0;//输入的x的数量
+    Activation (*activation)=&sigmoid;
     double x[N+5]={},k[N+5]={},b=0,y=0;//y=sigmoid(sum(kx)+b)
     double d=0,dx[N+5]={};//权重(求导) y对输出的权重，x对输出的权重
     neuron(){
         b=rand()/1e5;//将b初始化为随机
+    }
+    void init(Activation (*atv)=&sigmoid){
+        activation=atv;
     }
     void addInput(){//增加一条入边，将k初始化为随机
         k[++num]=rand()/1e5;
@@ -28,14 +61,15 @@ public:
                 y+=x[i]*k[i];
             }
             y+=b;
-            y=1.0/(1+exp(-y));
+            y=activation->forward(y);
         }else if(side==1){//已知y对下一个节点的贡献d时，计算x,k,b的贡献并对k,b梯度下降
-            d*=y*(1-y);
+            d*=activation->backward(y);
             b-=step*d;
             for(int i=1;i<=num;i++){
                 dx[i]=d*k[i];//计算x贡献
                 k[i]-=step*d*x[i];//计算k贡献并梯度下降
             }
+            d=0;
         }
     }
 };
@@ -43,32 +77,38 @@ neuron net[N+5];//声明所有可能用到的节点
 int Index[N+5];//第i条边为其指向的节点第index[i]个输入
 int n=0;//节点数
 int m=0;//边数
-void addNode(){//添加节点
-    n++;
+void addNode(Activation *activation){//添加节点
+    net[++n].init(activation);
+}
+void addNode(int num,Activation *activation){//批量添加节点
+    for(int i=1;i<=num;i++){
+        addNode(activation);
+    }
 }
 struct edge{//链式前向星（无边权）
     int to=0,nxt=0;
 };
 class traverse{
-public:
+private:
     int side=0;//向前还是向后
     int head[N]={};//链式前向星
     int ind[N]={};//第i个节点的入度数量
-    traverse(int SIDE):side(SIDE){}
     edge e[N];
+    void update(int x,int y,int index){//更新节点x->y的数值
+        if(side==0){
+            net[y].x[index]=net[x].y;
+        }else if(side==1){
+            net[y].d+=net[x].dx[index];
+        }
+    }
+public:
+    traverse(int SIDE):side(SIDE){}
     void add(int x,int y,bool visible){//建立x->y的一条边
         if(visible){
             ind[y]++;
         }
         e[m]=edge{y,head[x]};
         head[x]=m;
-    }
-    void update(int x,int y,int index){//更新节点x->y的数值
-        if(side==0){
-            net[y].x[index]=net[x].y;
-        }else if(side==1){
-            net[y].d=net[x].dx[index];
-        }
     }
     void topo(){//拓扑排序
         int temp[N]={};
@@ -107,19 +147,20 @@ void addEdge(int x,int y,bool visible=1){
 }
 int main(){
     init();
-    for(int i=1;i<=4;i++){
-        addNode();
-    }
+    addNode(4,&sigmoid);
     addEdge(1,2);
     addEdge(1,3);
     addEdge(2,3);
     addEdge(3,4);
-    net[1].y=0.5;
     while(1){
-        Forward.topo();
-        cout<<net[4].y<<endl;
-        net[4].d=net[4].y-0.4;
-        Backward.topo();
+        // for(double i=0;i<=1;i+=0.01){
+            net[1].y=1;
+            Forward.topo();
+            //cout<<net[4].y<<endl;
+            net[4].d=net[4].y-0.3;
+            cout<<net[4].y<<endl;
+            Backward.topo();
+        // }
     }
     return 0;
 }
