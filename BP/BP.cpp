@@ -3,13 +3,16 @@
 #include<random>
 #include<matplotlibcpp.h>
 
+namespace plt = matplotlibcpp;
 using namespace std;
+double temp;
+vector<double> draw;
 const int N=(5e3);//最大值
-const double step=1;//学习步长s
+double step=0.1;//学习步长s
 void randInit(){//初始化
     srand(time(NULL));//随机数初始化
 }
-class Activation{
+class Activation{//激活函数基类
 public:
     virtual void forward(int num,double *x,double *k,double &y){
         for(int i=1;i<=num;i++){
@@ -43,7 +46,7 @@ public:
         }
     }
 }sigmoid;
-class ReLu:public Activation{
+class ReLu:public Activation{//ReLu激活函数
 public:
     void forward(int num,double *x,double *k,double &y){
         for(int i=1;i<=num;i++){
@@ -75,7 +78,6 @@ public:
         d=1;
         for(int i=1;i<=num;i++){
             dx[i]=-log(k[i])/num;
-            k[i]-=-step*x[i]/(k[i]*num);
         }
     }
 }binary_crossentropy;
@@ -91,11 +93,11 @@ public:
         for(int i=1;i<=num;i++){
             if(x[i]>k[i]){
                 dx[i]=1;
-                k[i]-=-1;
             }else{
                 dx[i]=-1;
-                k[i]-=1;
             }
+            //dx[i]=x[i]-k[i];
+            
         }
     }
 }l1;
@@ -104,11 +106,9 @@ private:
 public:
     int num=0;//输入的x的数量
     Activation (*activation)=&sigmoid;
-    double x[N+5]={},k[N+5]={},b=0,y=0;//y=sigmoid(sum(kx)+b)
+    double x[N+5]={},k[N+5]={},y=0;//y=sigmoid(sum(kx)+b)
     double d=0,dx[N+5]={};//权重(求导) y对输出的权重，x对输出的权重
-    neuron(){
-        b=rand()/1e5;//将b初始化为随机
-    }
+    neuron(){}
     void init(Activation (*atv)=&sigmoid){
         activation=atv;
     }
@@ -130,8 +130,11 @@ neuron net[N+5];//声明所有可能用到的节点
 int Index[N+5];//第i条边为其指向的节点第index[i]个输入
 int n=0;//节点数
 int m=0;//边数
-void addNode(Activation *activation){//添加节点
-    net[++n].init(activation);
+void addNode(Activation *activation,bool vis=1){//添加节点
+    if(vis==1)
+        net[++n].init(activation);
+    else
+        net[n+1].init(activation);
 }
 void addNode(int num,Activation *activation){//批量添加节点
     for(int i=1;i<=num;i++){
@@ -141,7 +144,7 @@ void addNode(int num,Activation *activation){//批量添加节点
 struct edge{//链式前向星（无边权）
     int to=0,nxt=0;
 };
-class traverse{
+class traverse{//遍历
 private:
     int side=0;//向前还是向后
     int head[N]={};//链式前向星
@@ -156,6 +159,7 @@ private:
 public:
     int ind[N]={};//第i个节点的入度数量
     traverse(int SIDE):side(SIDE){}
+    friend void train(double *x,double *y);
     void add(int x,int y,bool visible){//建立x->y的一条边
         if(visible){
             ind[y]++;
@@ -165,14 +169,18 @@ public:
     }
     void topo(){//拓扑排序
         int temp[N]={};
-        for(int i=1;i<=n;i++){
+        for(int i=1;i<=n+1;i++){
             temp[i]=ind[i];
         }
         queue<int> q;
-        for(int i=1;i<=n;i++){
-            if(temp[i]==0){
-                q.push(i);
+        if(side==0){
+            for(int i=1;i<=n;i++){
+                if(temp[i]==0){
+                    q.push(i);
+                }
             }
+        }else if(side==1){
+            q.push(n+1);
         }
         while(!q.empty()){
             int u=q.front();
@@ -191,18 +199,18 @@ public:
 };
 traverse Forward(0);
 traverse Backward(1);
-void addEdge(int x,int y,bool forwardVis=1,bool backwardVis=1){
+void addEdge(int x,int y,bool vis=1){
     net[y].addInput();
     m++;
     Index[m]=net[y].num;
-    Forward.add(x,y,forwardVis);
-    Backward.add(y,x,backwardVis);
+    Forward.add(x,y,vis);
+    Backward.add(y,x,vis);
 }
 void init(Activation *activation){
-    addNode(activation);
+    addNode(activation,0);
     for(int i=1;i<=n;i++){
-        if(Forward.ind[i]==0){
-            addEdge(i,n,0,1);
+        if(Backward.ind[i]==0){
+            addEdge(i,n+1);
         }
     }
 }
@@ -213,35 +221,51 @@ void train(double *x,double *y){
             net[i].y=x[++cnt];
         }
     }
-    Forward.topo();
-    cnt=0;
-    for(int i=1;i<=n;i++){
-        if(Backward.ind[i]==0){
-            net[i].d=net[i].y-y[++cnt];
-        }
+    for(int i=1;i<=net[n+1].num;i++){
+        net[n+1].k[i]=y[i];
     }
-    cout<<net[6].y<<" "<<net[6].d<<endl;
+    Forward.topo();
+    step=net[n+1].y*10;
+    temp=net[n+1].y;
+    //printf("%.6lf\t%.6lf\t%.6lf\t%.6lf\n",x[1],y[1],net[n].y,net[n+1].y);
     Backward.topo();
 }
-int main(){
-    randInit();
-    addNode(6,&sigmoid);
-    addEdge(1,2);
-    addEdge(1,3);
-    addEdge(2,4);
-    addEdge(3,4);
-    addEdge(2,5);
-    addEdge(3,5);
-    addEdge(4,6);
-    addEdge(5,6);
-    init(&binary_crossentropy);
-    while(1){
-        for(double i=0;i<=0.9;i+=0.1){
-            double x[10]={},y[10]={};
-            x[1]=i;
-            y[1]=i+0.1;
-            train(x,y);
+void clean(){
+    for(int i=1;i<=n+1;i++){
+        net[i].d=net[i].y=0;
+        for(int j=1;j<=net[i].num;j++){
+            net[i].dx[j]=net[i].x[j]=0;
         }
     }
+}
+int main(){
+    freopen("BP3.out","w",stdout);
+    randInit();
+    addNode(2,&sigmoid);
+    addEdge(1,2);
+    // addEdge(2,3);
+    // addEdge(1,3);
+    // addEdge(2,4);
+    // addEdge(3,4);
+    // addEdge(2,5);
+    // addEdge(3,5);
+    // addEdge(4,6);
+    // addEdge(5,6);
+    init(&l1);
+    for(int j=1;j<=2e3;j++){
+    //while(1){
+        double ans=0;
+        for(double i=0.2;i<=0.9;i+=0.1){
+            double x[10]={},y[10]={};
+            x[1]=i;
+            y[1]=i;
+            train(x,y);
+            clean();
+            ans=max(ans,temp);
+        }
+        cout<<ans<<" ";
+        //draw.push_back(ans);
+    }
+    cout<<endl;
     return 0;
 }
