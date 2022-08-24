@@ -53,5 +53,7 @@
         "valarray": "cpp",
         "xiosbase": "cpp"
     },
-    "commentTranslate.source": "Bing"
+    "commentTranslate.source": "Bing",
+    "workbench.preferredDarkColorTheme": "Visual Studio Light",
+    "workbench.colorTheme": "Visual Studio Light"
 }

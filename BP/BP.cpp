@@ -227,7 +227,7 @@ void train(double *x,double *y){
     Forward.topo();
     step=net[n+1].y*10;
     temp=net[n+1].y;
-    //printf("%.6lf\t%.6lf\t%.6lf\t%.6lf\n",x[1],y[1],net[n].y,net[n+1].y);
+    printf("%.6lf\t%.6lf\t%.6lf\t%.6lf\n",x[1],y[1],net[n].y,net[n+1].y);
     Backward.topo();
 }
 void clean(){
@@ -239,7 +239,7 @@ void clean(){
     }
 }
 int main(){
-    freopen("BP3.out","w",stdout);
+    //freopen("BP3.out","w",stdout);
     randInit();
     addNode(2,&sigmoid);
     addEdge(1,2);
@@ -263,7 +263,7 @@ int main(){
             clean();
             ans=max(ans,temp);
         }
-        cout<<ans<<" ";
+        //cout<<ans<<" ";
         //draw.push_back(ans);
     }
     cout<<endl;
