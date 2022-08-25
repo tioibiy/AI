@@ -49,6 +49,7 @@ A_1,A_2\cdots ,A_n
 $$
 
 为完备事件组，即
+
 $$
 \bigcup_{i=1}^nA_i=\Omega,A_iA_j=\varnothing,P(A_i)>0
 $$ 
@@ -63,7 +64,7 @@ $$
 
 ## TF-IDF
 
-对于某个词汇$i$在第$j$篇文章中的权重$w_{i,j}$
+对于某个词汇 $i$ 在第 $j$ 篇文章中的权重 $w_{i,j}$
 
 $$
 tf_{i,j}=\frac{n_{i,j}}{N_j}
