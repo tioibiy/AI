@@ -20,9 +20,9 @@ K均值聚拢算法
 
 ### TF-IDF
 
-TF- $Term Frequency$ 词频
+TF-$Term Frequency$词频
 
-IDF- $Inverse Document Frequency$ 逆文本频率指数
+IDF-$Inverse Document Frequency$逆文本频率指数
 
 ---
 
@@ -50,13 +50,13 @@ $$
 
 ## TF-IDF
 
-对于某个词汇 $i$ 在第 $j$ 篇文章中的权重 $w_{i,j}$
+对于某个词汇$i$在第$j$篇文章中的权重$w_{i,j}$
 
 $$
 tf_{i,j}=\frac{n_{i,j}}{N_j}
 $$
 
-其中 $n_{i,j}$ 表示某词 $i$ 在文档 $j$ 中出现的次数，N表示文档 $j$ 的词数
+其中$n_{i,j}$表示某词$i$在文档$j$中出现的次数，N表示文档$j$的词数
 
 $$
 idf_i=lg(\frac{D}{1+d_i})
