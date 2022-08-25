@@ -38,7 +38,7 @@ $$
 P(A_i|B)=\frac{P(B|A_i)P(A_i)}{\sum_{j}P(B|A_j)P(A_j)}
 $$
 
-其中$A_1,A_2\cdots ,A_n$为完备事件组，即$U_{i=1}^nA_i=\Omega,A_iA_j=\varnothing,P(A_i)>0$
+其中$A_1,A_2\cdots ,A_n$为完备事件组，即$\bigcup_{i=1}^nA_i=$ $\Omega,A_iA_j=$ $\varnothing,P(A_i)>0$
 
 ~~之后再补充概率论吧~~
 
